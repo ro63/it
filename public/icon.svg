@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="26" fill="#151c24"/>
+  <g transform="translate(64,58)">
+    <g fill="#e06f10">
+      <rect x="-7" y="-46" width="14" height="16" rx="3"/>
+      <rect x="-7" y="30" width="14" height="16" rx="3"/>
+      <rect x="-46" y="-7" width="16" height="14" rx="3"/>
+      <rect x="30" y="-7" width="16" height="14" rx="3"/>
+      <rect x="-39" y="-39" width="15" height="14" rx="3" transform="rotate(45 -31.5 -32)"/>
+      <rect x="24" y="-39" width="15" height="14" rx="3" transform="rotate(-45 31.5 -32)"/>
+      <rect x="-39" y="25" width="15" height="14" rx="3" transform="rotate(-45 -31.5 32)"/>
+      <rect x="24" y="25" width="15" height="14" rx="3" transform="rotate(45 31.5 32)"/>
+    </g>
+    <circle r="32" fill="#e06f10"/>
+    <circle r="20" fill="#151c24"/>
+    <text x="0" y="9" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="900" fill="#f2f5f8">N</text>
+  </g>
+  <text x="64" y="118" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="3" fill="#a6b6c5">NIPCO</text>
+</svg>
