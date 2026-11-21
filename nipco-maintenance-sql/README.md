@@ -12,8 +12,8 @@
 ## نصب (خلاصه)
 
 ```powershell
-# ۱) روی ماشین Build
-powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO\publish
+# ۱) روی ماشین Build — ساده‌ترین راه: دوبار کلیک روی build-package.cmd
+powershell -ExecutionPolicy Bypass -File deploy\build-package.ps1
 
 # ۲) روی سرور: پوشه C:\NIPCO\publish را کپی کنید، سپس
 powershell -ExecutionPolicy Bypass -File db\install-database.ps1 -Server ".\SQLEXPRESS"
@@ -29,11 +29,12 @@ powershell -ExecutionPolicy Bypass -File deploy\healthcheck.ps1 -Url http://loca
 * **[docs/install-guide.md](docs/install-guide.md)** — راهنمای گام‌به‌گام فارسی (برای شروع از این استفاده کنید)
 * **[docs/install.md](docs/install.md)** — مرجع فنی، تنظیمات و API
 
-### گرفتن بسته آماده بدون نصب ابزارها
+### ساخت بسته
 
-در GitHub → تب **Actions** → workflow **Build install package** → *Run workflow*.
-در پایان فایل `NIPCO-Maintenance-install.zip` را از بخش Artifacts دانلود کنید؛
-داخلش همان محتوای `C:\NIPCO\publish` است (UI + API + اسکریپت‌های دیتابیس + راهنما).
+* ویندوز: روی `build-package.cmd` دوبار کلیک کنید؛ پیش‌نیازها خودکار نصب می‌شوند و
+  خروجی `publish\` و `publish.zip` است.
+* یا: `powershell -ExecutionPolicy Bypass -File deploy\build-package.ps1 -SelfContained`
+  (Runtime داخل بسته، سرور به هیچ پیش‌نیاز .NET نیاز ندارد)
 
 ## دیدن ظاهر بدون دیتابیس
 

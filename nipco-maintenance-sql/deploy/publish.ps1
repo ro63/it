@@ -17,7 +17,10 @@
 param(
     [string]$OutputPath = (Join-Path $PSScriptRoot "..\publish"),
     [string]$Configuration = "Release",
-    [string]$Runtime = "win-x64"
+    [string]$Runtime = "win-x64",
+    # Self-contained output bundles the .NET runtime, so the server does not need
+    # ASP.NET Core Runtime installed. Larger folder, fewer prerequisites.
+    [switch]$SelfContained
 )
 
 $ErrorActionPreference = "Stop"
@@ -54,7 +57,8 @@ New-Item -ItemType Directory -Path $wwwroot | Out-Null
 Copy-Item (Join-Path $root "dist\*") $wwwroot -Recurse -Force
 
 Push-Location $apiDir
-dotnet publish -c $Configuration -r $Runtime --self-contained false -o $OutputPath
+$selfContainedArg = if ($SelfContained) { "true" } else { "false" }
+dotnet publish -c $Configuration -r $Runtime --self-contained $selfContainedArg -o $OutputPath
 if ($LASTEXITCODE -ne 0) { Pop-Location; throw "dotnet publish failed" }
 Pop-Location
 Pop-Location
@@ -62,6 +66,8 @@ Pop-Location
 if (-not (Test-Path (Join-Path $OutputPath "wwwroot\index.html"))) {
     throw "wwwroot\index.html is missing from the publish output - the SPA would not load."
 }
+
+Write-Host "Self-contained: $SelfContained" -ForegroundColor Gray
 
 Write-Host "==> 4/4 copying database scripts, helpers and documentation" -ForegroundColor Cyan
 Copy-Item (Join-Path $root "db") (Join-Path $OutputPath "db") -Recurse -Force

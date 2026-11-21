@@ -72,12 +72,38 @@ dotnet --list-runtimes
 
 ## مرحله ۳ — ساخت بسته نصب
 
-پوشه `nipco-maintenance-sql` را روی کامپیوتر خود باز کنید و در PowerShell اجرا کنید:
+### ساده‌ترین راه (یک دوبار کلیک)
+
+روی کامپیوتر ویندوز، فایل زیر را **دوبار کلیک** کنید:
+
+```
+nipco-maintenance-sql\build-package.cmd
+```
+
+این فایل خودش:
+
+1. اگر Node.js نبود، نصب می‌کند (از طریق winget)
+2. اگر .NET SDK 10 نبود، نصب می‌کند
+3. بسته را در پوشه `publish` می‌سازد
+4. فایل `publish.zip` را می‌سازد — **همین فایل را روی سرور کپی کنید**
+
+> اگر خطای «winget not available» دیدید، Node.js و .NET SDK 10 را دستی نصب کنید
+> (لینک‌ها در همان پیام خطا می‌آید) و دوباره `build-package.cmd` را اجرا کنید.
+
+### راه دستی (PowerShell)
 
 ```powershell
 cd nipco-maintenance-sql
 powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO\publish
 ```
+
+اگر می‌خواهید روی سرور **نیازی به نصب .NET Runtime نباشد**:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO\publish -SelfContained
+```
+
+(پوشه بزرگ‌تر می‌شود ~۱۵۰ مگابایت، ولی پیش‌نیاز اجرا حذف می‌شود.)
 
 در پایان پیام `Install folder ready: C:\NIPCO\publish` را می‌بینید.
 
@@ -98,7 +124,8 @@ powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO
 
 ## مرحله ۴ — ساخت دیتابیس
 
-پوشه `C:\NIPCO\publish` را به سرور منتقل کنید (مثلاً همان مسیر). سپس روی سرور:
+اول `publish.zip` (یا پوشه `publish`) را روی سرور در مسیر `C:\NIPCO\publish` باز کنید.
+سپس روی سرور:
 
 ```powershell
 cd C:\NIPCO\publish

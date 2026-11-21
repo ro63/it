@@ -24,10 +24,15 @@
 
 ### الف) ساخت بسته روی ماشین Build (پیشنهادی)
 
-```powershell
-cd <مسیر پروژه>\nipco-maintenance-sql
-powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO\publish
+```cmd
+REM ساده‌ترین راه: دوبار کلیک روی build-package.cmd
+REM یا با PowerShell:
+powershell -ExecutionPolicy Bypass -File deploy\build-package.ps1 -OutputPath C:\NIPCO\publish
 ```
+
+`build-package.ps1` پیش‌نیازهای ساخت (Node.js، .NET SDK 10) را در صورت نبود نصب
+می‌کند و در پایان `publish.zip` می‌سازد. اگر می‌خواهید Runtime هم داخل بسته باشد:
+`-SelfContained` را اضافه کنید.
 
 این اسکریپت به‌ترتیب:
 
