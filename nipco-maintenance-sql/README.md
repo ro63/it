@@ -9,6 +9,11 @@
 | API | ASP.NET Core 10 + EF Core 10 + Identity + JWT |
 | دیتابیس | SQL Server (اسکریپت نصب مستقل + migration‌پذیر) |
 
+## دیدن ظاهر بدون دیتابیس
+
+فایل `NIPCO-demo-single-file.html` را دانلود و باز کنید (یک فایل، بدون سرور) —
+ورود: `takhti` / `123456`. توضیح بیشتر: [docs/preview.md](docs/preview.md)
+
 ## شروع سریع
 
 ```bash
