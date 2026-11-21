@@ -24,12 +24,24 @@ powershell -ExecutionPolicy Bypass -File deploy\healthcheck.ps1 -Url http://loca
 # ۳) ورود: takhti / 123456
 ```
 
-راهنمای کامل: **[docs/install.md](docs/install.md)**
+راهنماها:
+
+* **[docs/install-guide.md](docs/install-guide.md)** — راهنمای گام‌به‌گام فارسی (برای شروع از این استفاده کنید)
+* **[docs/install.md](docs/install.md)** — مرجع فنی، تنظیمات و API
+
+### گرفتن بسته آماده بدون نصب ابزارها
+
+در GitHub → تب **Actions** → workflow **Build install package** → *Run workflow*.
+در پایان فایل `NIPCO-Maintenance-install.zip` را از بخش Artifacts دانلود کنید؛
+داخلش همان محتوای `C:\NIPCO\publish` است (UI + API + اسکریپت‌های دیتابیس + راهنما).
 
 ## دیدن ظاهر بدون دیتابیس
 
 فایل `NIPCO-demo-single-file.html` را دانلود و باز کنید (یک فایل، بدون سرور) —
 ورود: `takhti` / `123456`. توضیح بیشتر: [docs/preview.md](docs/preview.md)
+
+> این فایل فقط برای دیدن ظاهر است. در نسخه واقعی، داده‌ها از SQL Server خوانده می‌شوند
+> و هیچ داده نمونه‌ای در بسته نصب وجود ندارد (خودکار در GitHub Actions بررسی می‌شود).
 
 ## ساختار
 
