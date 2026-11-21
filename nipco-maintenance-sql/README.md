@@ -24,6 +24,8 @@ powershell -ExecutionPolicy Bypass -File deploy\healthcheck.ps1 -Url http://loca
 # ۳) ورود: takhti / 123456
 ```
 
+**تازه‌کار هستید؟** [docs/download-and-install.md](docs/download-and-install.md) — دانلود، ساخت بسته و نصب گام‌به‌گام.
+
 راهنماها:
 
 * **[docs/install-guide.md](docs/install-guide.md)** — راهنمای گام‌به‌گام فارسی (برای شروع از این استفاده کنید)
