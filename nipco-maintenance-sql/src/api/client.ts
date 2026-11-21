@@ -7,8 +7,12 @@ import { demoHandler } from './demo';
 
 export const API_BASE: string = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 
-/** UI-only preview mode: `npm run dev` with VITE_DEMO=1 (never active in a build). */
-const DEMO_MODE = import.meta.env.DEV && import.meta.env.VITE_DEMO === '1';
+/**
+ * UI-only preview mode. Enabled by VITE_DEMO=1, which is set only in `.env.demo`
+ * (loaded for `vite --mode demo` / `npm run dev:demo`). A normal production build
+ * uses mode "production", does not load that file, and therefore never ships fixtures.
+ */
+const DEMO_MODE = import.meta.env.VITE_DEMO === '1';
 
 const TOKEN_KEY = 'nipco_token';
 

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import LoginPage from './pages/LoginPage';
@@ -43,15 +43,21 @@ function AppRoutes() {
   );
 }
 
+/**
+ * Public demo/preview builds (`vite build --mode demo`) use hash routing so the
+ * static files also run when opened straight from disk. Production keeps clean URLs.
+ */
+const Router = import.meta.env.VITE_DEMO === '1' ? HashRouter : BrowserRouter;
+
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <AuthProvider>
         <DataProvider>
           <AppRoutes />
         </DataProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </Router>
   );
 }
 
