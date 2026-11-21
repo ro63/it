@@ -1,110 +1,84 @@
 # نصب سیستم کنترل روزانه تجهیزات NIPCO
 
-این نسخه همان برنامه قبلی است (ظاهر و صفحات بدون تغییر) با این تفاوت که
-داده‌ها به‌جای `localStorage` مرورگر در **SQL Server** ذخیره می‌شوند و یک API
-کامل ASP.NET Core در کنار آن قرار گرفته است.
-
-```
-nipco-maintenance-sql/
-├── db/
-│   └── 01_Install_NIPCO_Maintenance.sql   ← اسکریپت نصب دیتابیس (idempotent)
-├── server/Nipco.Maintenance.Api/          ← API + میزبانی SPA (net10.0)
-├── src/                                   ← React + Vite (بدون تغییر در ظاهر)
-├── deploy/                                ← اسکریپت‌های publish / نصب IIS / نصب DB
-└── docs/install.md                        ← همین فایل
-```
+نسخه SQL Server همان برنامه قبلی است؛ **ظاهر، صفحات و تم‌ها تغییر نکرده‌اند**.
+تنها تفاوت: داده‌ها به‌جای حافظه مرورگر در **SQL Server** ذخیره می‌شوند.
 
 ---
 
-## ۱) پیش‌نیازها
+## ۰) پیش‌نیازها
 
-| نرم‌افزار | نسخه | توضیح |
+| مورد | نسخه | چرا لازم است |
 |---|---|---|
-| SQL Server | 2016 یا بالاتر (Express کافی است) | موتور دیتابیس |
-| .NET Runtime / ASP.NET Core Runtime | **10.0** | اجرای API |
-| IIS (اختیاری) | 10 | میزبانی روی ویندوز |
-| Node.js | 20+ | فقط برای build فرانت‌اند |
+| SQL Server (Express کافی است) | ۲۰۱۶ یا بالاتر | دیتابیس |
+| ASP.NET Core Runtime + .NET Runtime | **۱۰.۰** | اجرای API |
+| IIS + ASP.NET Core Hosting Bundle | ۱۰ | فقط اگر با IIS میزبانی می‌کنید |
+| Node.js | فقط روی ماشین Build | ساخت فایل‌های UI |
+| .NET SDK 10 | فقط روی ماشین Build | ساخت خروجی publish |
 
-> اگر می‌خواهید همه چیز روی یک ماشین باشد: SQL Server + IIS + Hosting Bundle نسخه ۱۰.
+> اگر همه کارها را روی یک سرور ویندوز انجام می‌دهید، هر دو مورد Node.js و SDK را
+> همان‌جا نصب کنید و مستقیم `publish.ps1` را اجرا کنید.
+
+---
+
+## ۱) گرفتن فایل‌های نصب
+
+### الف) ساخت بسته روی ماشین Build (پیشنهادی)
+
+```powershell
+cd <مسیر پروژه>\nipco-maintenance-sql
+powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO\publish
+```
+
+این اسکریپت به‌ترتیب:
+
+1. `npm ci` — نصب پکیج‌های فرانت‌اند
+2. `npm run build` — ساخت UI (بدون داده نمونه)
+3. کپی خروجی در `server\Nipco.Maintenance.Api\wwwroot`
+4. `dotnet publish -c Release -r win-x64`
+5. کپی پوشه‌های `db` و `docs` و نمونه تنظیمات کنار خروجی
+
+خروجی `C:\NIPCO\publish` **همان بسته نصب** است. کل این پوشه را روی سرور کپی کنید.
+
+### ب) بسته آماده
+
+اگر پوشه `dist-package/` را در اختیار دارید، محتوای آن همان چیزی است که
+`publish.ps1` می‌سازد؛ مستقیم روی سرور کپی کنید.
 
 ---
 
 ## ۲) نصب دیتابیس
 
-### روش الف — خط فرمان (پیشنهادی)
+روی سرور، با کاربری که اجازه ساخت دیتابیس دارد:
 
 ```powershell
-cd <مسیر برنامه>
-powershell -ExecutionPolicy Bypass -File deploy\install-database.ps1 -Server ".\SQLEXPRESS"
+cd C:\NIPCO\publish
+powershell -ExecutionPolicy Bypass -File db\install-database.ps1 -Server ".\SQLEXPRESS"
 ```
 
-### روش ب — SSMS / Azure Data Studio
+یا با SSMS: فایل `db\01_Install_NIPCO_Maintenance.sql` را باز و اجرا (F5) کنید.
 
-فایل `db/01_Install_NIPCO_Maintenance.sql` را روی سرور مورد نظر اجرا کنید.
-اسکریپت خودش دیتابیس `NIPCO_Maintenance` را می‌سازد.
+اسکریپت **قابل اجرای چندباره** است و این‌ها را می‌سازد:
 
-### روش ج — sqlcmd دستی
-
-```powershell
-sqlcmd -S .\SQLEXPRESS -E -i db\01_Install_NIPCO_Maintenance.sql
-```
-
-اسکریپت **قابل اجرای چندباره** است: اگر دیتابیس وجود داشته باشد فقط جداول/ایندکس‌های
-نبود‌شده ساخته می‌شوند و داده‌های اولیه هم فقط وقتی جداول خالی باشند درج می‌شوند.
-
-آنچه ساخته می‌شود:
-
-* ۷ جدول دامنه: `EquipmentGroups`, `Equipment`, `CheckItems`, `CheckItemGroups`,
+* دیتابیس `NIPCO_Maintenance` (collation فارسی)
+* جداول: `EquipmentGroups`, `Equipment`, `CheckItems`, `CheckItemGroups`,
   `DailyInspections`, `InspectionResults`, `AuditLogs`
-* جداول Identity: `AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, ...
-* ایندکس‌های یکتا (`Equipment.Code`, `Equipment.QrCode`, `EquipmentGroups.Name`) و
-  ایندکس‌های گزارش‌گیری (تاریخ بازدید، تجهیز/تاریخ/شیفت)
-* داده اولیه: ۵ گروه تجهیزات، ۲۲ تجهیز، ۲۸ آیتم چک‌لیست، ۳ کاربر
-  (`takhti`, `esfandiari`, `azmian` با رمز `123456` — مدیر، سرپرست، تکنسین)
+* جداول کاربران/نقش‌ها (ASP.NET Identity)
+* ایندکس‌های یکتا و گزارشی
+* داده اولیه: ۵ گروه، ۲۲ تجهیز، ۲۸ آیتم چک‌لیست، ۳ کاربر
 
----
-
-## ۳) تنظیم اتصال و کلید امنیتی
-
-فایل `appsettings.Production.json` را کنار `Nipco.Maintenance.Api.dll` بسازید
-(نمونه: `server/Nipco.Maintenance.Api/appsettings.Production.Sample.json`):
-
-```json
-{
-  "ConnectionStrings": {
-    "Maintenance": "Server=.\\SQLEXPRESS;Database=NIPCO_Maintenance;User Id=nipco_app;Password=***;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
-  },
-  "Jwt": {
-    "Issuer": "NIPCO.Maintenance",
-    "Audience": "NIPCO.Maintenance.Client",
-    "Key": "<یک رشته تصادفی حداقل ۳۲ کاراکتری>",
-    "ExpiryHours": 12
-  },
-  "Cors": { "AllowedOrigins": [ "http://localhost" ] },
-  "Bootstrap": {
-    "AdminUsername": "",
-    "AdminPassword": "",
-    "EnsureOnStartup": true
-  },
-  "AllowedHosts": "*"
-}
-```
-
-ساخت کلید تصادفی:
+### بررسی صحت نصب
 
 ```powershell
-[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Max 256 }))
+sqlcmd -S .\SQLEXPRESS -E -i db\verify-database.sql
 ```
 
-* `Jwt:Key` اجباری است؛ اگر خالی یا کوتاه‌تر از ۳۲ کاراکتر باشد، برنامه بالا نمی‌آید.
-* اگر دیتابیس را با `dotnet ef database update` خالی ساخته‌اید، با پر کردن
-  `Bootstrap:AdminUsername` / `Bootstrap:AdminPassword` هنگام استارت یک کاربر مدیر ساخته می‌شود.
+باید ۵/۲۲/۲۸/۳ و ۱۸ جدول را نشان دهد و هیچ ردیف «بدون گروه» نداشته باشد.
 
-### کاربر دیتابیس (اختیاری ولی توصیه‌شده)
+### کاربر دیتابیس برای برنامه (روش امن‌تر)
 
 ```sql
 USE master;
-CREATE LOGIN nipco_app WITH PASSWORD = N'***';
+CREATE LOGIN nipco_app WITH PASSWORD = N'یک-رمز-قوی';
 GO
 USE NIPCO_Maintenance;
 CREATE USER nipco_app FOR LOGIN nipco_app;
@@ -115,32 +89,71 @@ GO
 
 ---
 
-## ۴) ساخت و انتشار برنامه
+## ۳) تنظیمات برنامه
 
-روی ماشین build (نیاز به Node.js و .NET SDK 10):
+فایل تنظیمات را با یک کلید امنیتی تصادفی بسازید:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File deploy\publish.ps1 -OutputPath C:\NIPCO\publish
+cd C:\NIPCO\publish
+powershell -ExecutionPolicy Bypass -File deploy\setup-appsettings.ps1 `
+    -AppPath C:\NIPCO\publish -Server ".\SQLEXPRESS"
+
+# یا با کاربر SQL:
+powershell -ExecutionPolicy Bypass -File deploy\setup-appsettings.ps1 `
+    -AppPath C:\NIPCO\publish -Server ".\SQLEXPRESS" `
+    -UseSqlLogin -SqlUser nipco_app -SqlPassword 'رمز'
 ```
 
-مراحل داخل اسکریپت: `npm ci` → `npm run build` → کپی `dist` در `wwwroot` →
-`dotnet publish` → کپی پوشه‌های `db` و `docs` کنار خروجی.
+فایل `appsettings.Production.json` ساخته می‌شود:
 
-خروجی یک پوشه تک‌سرویسی است: همان پورت هم UI را سرو می‌کند و هم `/api`.
-(برای مسیرهای کلاینتی مثل `/dashboard` هم fallback به `index.html` انجام می‌شود.)
+```json
+{
+  "ConnectionStrings": {
+    "Maintenance": "Server=.\\SQLEXPRESS;Database=NIPCO_Maintenance;Integrated Security=True;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+  },
+  "Jwt": { "Key": "<کلید تصادفی>", "ExpiryHours": 12 },
+  "Bootstrap": { "EnsureOnStartup": true, "DefaultUserPassword": "123456" },
 
-### اجرای سریع برای تست
+  "AllowedHosts": "*"
+}
+```
+
+نکته‌ها:
+
+* `Jwt:Key` اجباری است (حداقل ۳۲ کاراکتر). اگر خالی باشد برنامه با پیام واضح بالا نمی‌آید.
+* رمز کاربران اولیه در SQL ذخیره نمی‌شود؛ در اولین اجرا، API برای کاربران بدون رمز
+  رمز پیش‌فرض `Bootstrap:DefaultUserPassword` (پیش‌فرض `123456`) را با الگوریتم
+  استاندارد Identity تنظیم می‌کند. بعد از اولین ورود آن را عوض کنید.
+* `Cors:AllowedOrigins` را خالی بگذارید؛ UI و API روی یک آدرس هستند.
+
+---
+
+## ۴) اجرا
+
+### الف) تست سریع (کنسول)
 
 ```powershell
 cd C:\NIPCO\publish
 dotnet Nipco.Maintenance.Api.dll --urls http://0.0.0.0:8080
 ```
 
-سپس مرورگر: <http://localhost:8080> — ورود با `takhti / 123456`.
+مرورگر: `http://localhost:8080` → ورود `takhti` / `123456`
 
----
+### ب) سرویس ویندوز (بدون IIS)
 
-## ۵) میزبانی روی IIS
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\install-windows-service.ps1 `
+    -AppPath C:\NIPCO\publish -Port 8080
+```
+
+یک Task در Startup ساخته می‌شود که برنامه را با کاربر SYSTEM اجرا می‌کند.
+اگر می‌خواهید Application Pool کاربر جدا داشته باشد، از IIS استفاده کنید.
+
+> چون Task با کاربر SYSTEM اجرا می‌شود، برای احراز هویت ویندوزی SQL باید
+> `NT AUTHORITY\SYSTEM` در SQL Server login داشته باشد؛ در غیر این‌صورت از
+> `-UseSqlLogin` استفاده کنید.
+
+### ج) IIS (توصیه‌شده برای محیط عملیاتی)
 
 ```powershell
 # PowerShell با دسترسی Administrator
@@ -148,53 +161,70 @@ powershell -ExecutionPolicy Bypass -File deploy\iis-setup.ps1 `
     -PhysicalPath C:\inetpub\NIPCO-Maintenance -Port 80
 ```
 
-۱. خروجی `publish` را در همان مسیر کپی کنید.
-۲. `appsettings.Production.json` را کنار dll قرار دهید.
-۳. به هویت Application Pool دسترسی زیر بدهید:
+سپس کافی است خروجی publish را در `C:\inetpub\NIPCO-Maintenance` کپی کنید.
+Application Pool باید **No Managed Code** باشد (اسکریپت همین را تنظیم می‌کند).
 
-```powershell
-# دسترسی خواندن/نوشتن به پوشه کلیدهای DataProtection (اگر استفاده می‌کنید)
-icacls "C:\ProgramData\NIPCO\Maintenance\Keys" /grant "IIS AppPool\NIPCO-Maintenance-Pool:(OI)(CI)M"
+* اگر SQL با Windows Authentication است، به هویت App Pool دسترسی بدهید:
+
+```sql
+CREATE LOGIN [IIS APPPOOL\NIPCO-Maintenance-Pool] FROM WINDOWS;
+USE NIPCO_Maintenance;
+CREATE USER [IIS APPPOOL\NIPCO-Maintenance-Pool] FOR LOGIN [IIS APPPOOL\NIPCO-Maintenance-Pool];
+ALTER ROLE db_datareader ADD MEMBER [IIS APPPOOL\NIPCO-Maintenance-Pool];
+ALTER ROLE db_datawriter ADD MEMBER [IIS APPPOOL\NIPCO-Maintenance-Pool];
+GO
 ```
 
-۴. اگر از Windows Authentication برای SQL استفاده می‌کنید، همان کاربر App Pool
-   (`IIS AppPool\NIPCO-Maintenance-Pool`) را در SQL Server به‌عنوان login بسازید و
-   به دیتابیس `NIPCO_Maintenance` دسترسی `db_datareader`/`db_datawriter` بدهید.
-   در غیر این صورت از `User Id` / `Password` در connection string استفاده کنید.
+* پورت ۸۰ را برای کاربران شبکه باز کنید: `New-NetFirewallRule -DisplayName "NIPCO" -Direction Inbound -LocalPort 80 -Protocol TCP -Action Allow`
 
 ---
 
-## ۶) API ها (خلاصه)
+## ۵) کنترل صحت نصب
 
-| متد | مسیر | دسترسی | کار |
-|---|---|---|---|
-| POST | `/api/auth/login` | آزاد | ورود، برگرداندن JWT |
-| GET | `/api/auth/me` | کاربر وارد‌شده | پروفایل |
-| POST | `/api/auth/change-password` | کاربر وارد‌شده | تغییر رمز |
-| GET/POST/PUT/DELETE | `/api/users` | Admin/Supervisor | مدیریت کاربران (حذف = غیرفعال‌سازی) |
-| GET | `/api/equipment-groups` | کاربر وارد‌شده | گروه‌ها + تعداد تجهیز |
-| GET | `/api/equipment-groups/{id}/check-items` | کاربر وارد‌شده | چک‌لیست یک گروه |
-| GET/POST/PUT/DELETE | `/api/equipment` | کاربر / Admin+Supervisor | تجهیزات |
-| GET | `/api/equipment/by-code/{code}` | کاربر وارد‌شده | اسکن QR |
-| GET/POST/PUT/DELETE | `/api/check-items` | کاربر / Admin+Supervisor | آیتم‌های چک‌لیست |
-| GET/POST/PUT/DELETE | `/api/inspections` | کاربر / ثبت: همه، ویرایش: Admin+Supervisor | بازدیدهای روزانه |
-| GET | `/api/reports/dashboard` | کاربر وارد‌شده | کارت‌های داشبورد |
-| GET | `/api/reports/inspection-trend?days=14` | کاربر وارد‌شده | روند بازدید |
-| GET | `/api/reports/problem-items?days=30` | کاربر وارد‌شده | پرتکرارترین خرابی‌ها |
-| GET | `/api/audit-logs` | Admin/Supervisor | لاگ عملیات |
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\healthcheck.ps1 -Url http://localhost:8080
+```
 
-بررسی سلامت سرویس: `GET /health` (اگر دیتابیس در دسترس نباشد ۵۰۳ برمی‌گرداند — مناسب IIS / مانیتورینگ).
+* `/health` → `{"status":"ok","database":"reachable"}` (اگر دیتابیس در دسترس نباشد: ۵۰۳)
+* صفحه اصلی باید همان صفحه ورود برنامه باشد.
+
+ورود با سه کاربر اولیه:
+
+| کاربر | رمز | نقش |
+|---|---|---|
+| `takhti` | `123456` | مدیر |
+| `esfandiari` | `123456` | سرپرست |
+| `azmian` | `123456` | تکنسین |
 
 ---
 
-## ۷) نکات عملیاتی
+## ۶) رفع اشکال
 
-* **پشتیبان‌گیری**: به‌صورت دوره‌ای `BACKUP DATABASE NIPCO_Maintenance TO DISK=...`
-  یا Maintenance Plan در SSMS.
-* **تغییر رمز کاربران پیش‌فرض** بلافاصله بعد از نصب انجام شود
-  (صفحه «کاربران» بعد از تکمیل، یا `POST /api/auth/change-password`).
-* **تاریخ‌ها** به‌صورت UTC ذخیره می‌شوند؛ نمایش تاریخ در UI مانند قبل است.
-* **حذف منطقی**: تجهیز/آیتم چک‌لیست/کاربری که سابقه دارد حذف فیزیکی نمی‌شود،
-  فقط `IsActive = 0` می‌شود تا گزارش‌های قبلی سالم بمانند.
-* **Migration (اختیاری)**: EF Core migration آماده نیست؛ اسکریپت SQL منبع حقیقت
-  اسکیمای دیتابیس است. برای تغییرات بعدی یک فایل `db/02_*.sql` اضافه کنید.
+| نشانه | علت رایج | راه‌حل |
+|---|---|---|
+| صفحه سفید | wwwroot خالی است | publish را دوباره اجرا کنید؛ `wwwroot\index.html` باید وجود داشته باشد |
+| ۵۰۲/۵۰۳ IIS | Runtime 10 نصب نیست یا App Pool اشتباه است | Hosting Bundle 10 را نصب و App Pool را No Managed Code کنید |
+| `Jwt:Key is missing` در لاگ | فایل تنظیمات وجود ندارد | `setup-appsettings.ps1` را اجرا کنید |
+| `Cannot reach the SQL Server database` | connection string/دسترسی | `sqlcmd -S ... -E -Q "SELECT 1"` و لاگ `logs` را ببینید |
+| ورود با `123456` کار نمی‌کند | کاربر رمز ندارد و `DefaultUserPassword` خالی است | مقدار را در تنظیمات پر کنید و برنامه را یک‌بار ری‌استارت کنید |
+| «گروهی با این نام قبلاً ثبت شده» | ایندکس یکتای نام گروه | نام دیگری انتخاب کنید |
+| تغییرات ذخیره نمی‌شود | کاربر نقش Viewer دارد | نقش Admin/Supervisor لازم است |
+
+لاگ‌ها: در IIS مسیر `C:\inetpub\NIPCO-Maintenance\logs` (StdOut) یا Event Viewer.
+
+---
+
+## ۷) نگهداری
+
+* **پشتیبان‌گیری روزانه**:
+
+```sql
+BACKUP DATABASE NIPCO_Maintenance
+TO DISK = N'D:\Backup\NIPCO_Maintenance.bak' WITH COMPRESSION, INIT;
+```
+
+* **تغییر رمز** کاربران از صفحه «کاربران» (پس از تکمیل) یا `POST /api/auth/change-password`.
+* **ارتقای نسخه**: پوشه publish جدید را روی فایل‌های قبلی کپی کنید (تنظیمات
+  `appsettings.Production.json` را نگه دارید) و اسکریپت‌های `db\02_...` را اجرا کنید.
+* **اسکیمای دیتابیس**: منبع حقیقت، اسکریپت‌های پوشه `db` هستند؛ برای هر تغییر یک
+  فایل شماره‌دار جدید بسازید و `01_` را تغییر ندهید.

@@ -52,7 +52,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   const method = (options.method ?? 'GET').toUpperCase();
 
   if (DEMO_MODE) {
-    const demoResult = demoHandler(path, method);
+    const demoResult = demoHandler(path, method, options.body ? JSON.parse(String(options.body)) : undefined);
     if (demoResult !== undefined) return demoResult as T;
   }
 

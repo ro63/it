@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Nipco.Maintenance.Api.Data;
@@ -93,7 +94,27 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // Model-state errors come back as { message, errors } instead of the default problem+json,
+        // so the SPA can show a Persian message directly.
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var messages = context.ModelState
+                .Where(kv => kv.Value?.Errors.Count > 0)
+                .SelectMany(kv => kv.Value!.Errors.Select(e =>
+                    string.IsNullOrWhiteSpace(e.ErrorMessage) ? kv.Key : e.ErrorMessage))
+                .Distinct()
+                .ToArray();
+
+            return new BadRequestObjectResult(new
+            {
+                message = messages.FirstOrDefault() ?? "درخواست نامعتبر است",
+                errors = messages
+            });
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // --------------------------------------------------------------------- app

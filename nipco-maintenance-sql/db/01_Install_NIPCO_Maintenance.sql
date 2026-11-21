@@ -21,7 +21,9 @@ ELSE
 GO
 
 IF DB_ID(N'NIPCO_Maintenance') IS NULL
-    THROW 50000, 'Database creation failed. The login needs dbcreator (or CREATE DATABASE) permission.', 1;
+BEGIN
+    ;THROW 50000, 'Database creation failed. The login needs dbcreator (or CREATE DATABASE) permission.', 1;
+END
 GO
 
 USE [NIPCO_Maintenance];
@@ -240,49 +242,49 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UserNameIndex' AND objec
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'EmailIndex' AND object_id = OBJECT_ID(N'dbo.AspNetUsers'))
     CREATE INDEX EmailIndex ON dbo.AspNetUsers (NormalizedEmail);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetRoleClaims_RoleId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetRoleClaims_RoleId' AND object_id = OBJECT_ID(N'dbo.AspNetRoleClaims'))
     CREATE INDEX IX_AspNetRoleClaims_RoleId ON dbo.AspNetRoleClaims (RoleId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetUserClaims_UserId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetUserClaims_UserId' AND object_id = OBJECT_ID(N'dbo.AspNetUserClaims'))
     CREATE INDEX IX_AspNetUserClaims_UserId ON dbo.AspNetUserClaims (UserId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetUserLogins_UserId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetUserLogins_UserId' AND object_id = OBJECT_ID(N'dbo.AspNetUserLogins'))
     CREATE INDEX IX_AspNetUserLogins_UserId ON dbo.AspNetUserLogins (UserId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetUserRoles_RoleId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AspNetUserRoles_RoleId' AND object_id = OBJECT_ID(N'dbo.AspNetUserRoles'))
     CREATE INDEX IX_AspNetUserRoles_RoleId ON dbo.AspNetUserRoles (RoleId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_EquipmentGroups_Name')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_EquipmentGroups_Name' AND object_id = OBJECT_ID(N'dbo.EquipmentGroups'))
     CREATE UNIQUE INDEX IX_EquipmentGroups_Name ON dbo.EquipmentGroups (Name);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Equipment_Code')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Equipment_Code' AND object_id = OBJECT_ID(N'dbo.Equipment'))
     CREATE UNIQUE INDEX IX_Equipment_Code ON dbo.Equipment (Code);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Equipment_QrCode')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Equipment_QrCode' AND object_id = OBJECT_ID(N'dbo.Equipment'))
     CREATE UNIQUE INDEX IX_Equipment_QrCode ON dbo.Equipment (QrCode);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Equipment_GroupId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Equipment_GroupId' AND object_id = OBJECT_ID(N'dbo.Equipment'))
     CREATE INDEX IX_Equipment_GroupId ON dbo.Equipment (GroupId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CheckItemGroups_EquipmentGroupId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CheckItemGroups_EquipmentGroupId' AND object_id = OBJECT_ID(N'dbo.CheckItemGroups'))
     CREATE INDEX IX_CheckItemGroups_EquipmentGroupId ON dbo.CheckItemGroups (EquipmentGroupId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DailyInspections_EquipmentId_Date_ShiftId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DailyInspections_EquipmentId_Date_ShiftId' AND object_id = OBJECT_ID(N'dbo.DailyInspections'))
     CREATE INDEX IX_DailyInspections_EquipmentId_Date_ShiftId ON dbo.DailyInspections (EquipmentId, [Date], ShiftId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DailyInspections_TechnicianId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DailyInspections_TechnicianId' AND object_id = OBJECT_ID(N'dbo.DailyInspections'))
     CREATE INDEX IX_DailyInspections_TechnicianId ON dbo.DailyInspections (TechnicianId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DailyInspections_Date')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DailyInspections_Date' AND object_id = OBJECT_ID(N'dbo.DailyInspections'))
     CREATE INDEX IX_DailyInspections_Date ON dbo.DailyInspections ([Date] DESC);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_InspectionResults_DailyInspectionId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_InspectionResults_DailyInspectionId' AND object_id = OBJECT_ID(N'dbo.InspectionResults'))
     CREATE INDEX IX_InspectionResults_DailyInspectionId ON dbo.InspectionResults (DailyInspectionId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_InspectionResults_CheckItemId')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_InspectionResults_CheckItemId' AND object_id = OBJECT_ID(N'dbo.InspectionResults'))
     CREATE INDEX IX_InspectionResults_CheckItemId ON dbo.InspectionResults (CheckItemId);
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AuditLogs_CreatedAt')
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AuditLogs_CreatedAt' AND object_id = OBJECT_ID(N'dbo.AuditLogs'))
     CREATE INDEX IX_AuditLogs_CreatedAt ON dbo.AuditLogs (CreatedAt DESC);
 GO
 
@@ -300,7 +302,10 @@ BEGIN
 
 END
 
-/* Users - password for every seed account: 123456 */
+/* Users.
+   Password hashes are intentionally NULL: the API assigns the default password
+   (Bootstrap:DefaultUserPassword, default 123456) to active users without a hash on
+   first start, using ASP.NET Identity itself. This is safer than shipping a hash. */
 IF NOT EXISTS (SELECT 1 FROM dbo.AspNetUsers)
 BEGIN
     INSERT INTO dbo.AspNetUsers
@@ -310,15 +315,15 @@ BEGIN
          FullName, PersonnelCode, Mobile, Role, SectionAccessJson, IsActive, CreatedAt)
     VALUES
         (N'D926AB37-2A67-57B2-A0DA-4BC98342390E', N'takhti', N'TAKHTI', NULL, NULL, 0,
-         N'AQAAAAIAAYagAAAAEE5JUENPLVNBTFQtMjAyNCH7o0ElidbYfM2ql/Q0lvT4oBskvmN5jpkFZCV5SQr4Jg==', NEWID(), NEWID(), N'09121111111', 0,
+         NULL, NEWID(), NEWID(), N'09121111111', 0,
          0, NULL, 1, 0,
          N'جعفر تختی', N'1001', N'09121111111', N'Admin', NULL, 1, SYSUTCDATETIME()),
         (N'B7766C29-EEB2-5347-B9C5-DCF5A7139BC3', N'esfandiari', N'ESFANDIARI', NULL, NULL, 0,
-         N'AQAAAAIAAYagAAAAEE5JUENPLVNBTFQtMjAyNCH7o0ElidbYfM2ql/Q0lvT4oBskvmN5jpkFZCV5SQr4Jg==', NEWID(), NEWID(), N'09122222222', 0,
+         NULL, NEWID(), NEWID(), N'09122222222', 0,
          0, NULL, 1, 0,
          N'اسفندیاری', N'1002', N'09122222222', N'Supervisor', NULL, 1, SYSUTCDATETIME()),
         (N'B2BDD8ED-636D-5266-AA0C-483F5DF06F91', N'azmian', N'AZMIAN', NULL, NULL, 0,
-         N'AQAAAAIAAYagAAAAEE5JUENPLVNBTFQtMjAyNCH7o0ElidbYfM2ql/Q0lvT4oBskvmN5jpkFZCV5SQr4Jg==', NEWID(), NEWID(), N'09123333333', 0,
+         NULL, NEWID(), NEWID(), N'09123333333', 0,
          0, NULL, 1, 0,
          N'فردین عظمیان', N'1003', N'09123333333', N'Technician', N'["mechanical"]', 1, SYSUTCDATETIME());
 

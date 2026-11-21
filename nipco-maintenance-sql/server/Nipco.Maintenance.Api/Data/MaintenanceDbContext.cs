@@ -38,6 +38,7 @@ public sealed class MaintenanceDbContext(DbContextOptions<MaintenanceDbContext> 
             e.HasIndex(x => x.GroupId);
             e.Property(x => x.Type).HasDefaultValue("custom");
             e.Property(x => x.Location).HasDefaultValue("");
+            e.Property(x => x.CommissioningDate).HasColumnType("date");
             e.Property(x => x.IsActive).HasDefaultValue(true);
             e.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
             e.HasOne(x => x.Group).WithMany(x => x.Equipment)

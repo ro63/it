@@ -54,6 +54,9 @@ public sealed class EquipmentGroupsController(MaintenanceDbContext db, AuditServ
     public async Task<ActionResult<EquipmentGroupDto>> Create([FromBody] SaveEquipmentGroupRequest request, CancellationToken ct)
     {
         var name = request.Name.Trim();
+        if (name.Length == 0)
+            return BadRequest(new { message = "نام گروه الزامی است" });
+
         if (await db.EquipmentGroups.AnyAsync(g => g.Name == name, ct))
             return Conflict(new { message = "گروهی با این نام قبلاً ثبت شده است" });
 
@@ -81,6 +84,9 @@ public sealed class EquipmentGroupsController(MaintenanceDbContext db, AuditServ
         if (group is null) return NotFound();
 
         var name = request.Name.Trim();
+        if (name.Length == 0)
+            return BadRequest(new { message = "نام گروه الزامی است" });
+
         if (await db.EquipmentGroups.AnyAsync(g => g.Name == name && g.Id != id, ct))
             return Conflict(new { message = "گروهی با این نام قبلاً ثبت شده است" });
 

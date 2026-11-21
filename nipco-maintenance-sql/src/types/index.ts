@@ -80,9 +80,9 @@ export interface InspectionResult {
   value?: number; // For numeric inputs
   textValue?: string; // For text inputs
   comment?: string;
-  photos: string[];
-  videos: string[];
-  audioFiles: string[];
+  photos?: string[];
+  videos?: string[];
+  audioFiles?: string[];
   technicianId: string;
   timestamp: Date;
   location?: {

@@ -28,3 +28,9 @@ bin/
 obj/
 wwwroot/
 publish/
+
+# The demo/preview mode file is intentionally tracked (!) even though .env.* is ignored
+!.env.demo
+
+# demo build intermediates
+dist-demo/

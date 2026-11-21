@@ -83,6 +83,9 @@ public sealed class InspectionsController(
                 return BadRequest(new { message = $"وضعیت نتیجه '{r.Status}' نامعتبر است" });
         }
 
+        if (request.Results.Any(r => r.CheckItemId == Guid.Empty))
+            return BadRequest(new { message = "شناسه آیتم چک‌لیست نامعتبر است" });
+
         var checkItemIds = request.Results.Select(r => r.CheckItemId).Distinct().ToList();
         var validItems = await db.CheckItems.Where(i => checkItemIds.Contains(i.Id))
             .Select(i => i.Id).ToListAsync(ct);

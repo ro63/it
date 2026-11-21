@@ -174,7 +174,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const current = equipmentGroups.find(g => g.id === id);
     if (!current) return;
 
-    const merged = { ...current, ...updates };
+    // merge against the freshest snapshot so concurrent updates are not lost
+    const merged: EquipmentGroup = { ...current, ...updates };
     const updated = await api.put<ApiEquipmentGroup>(`/api/equipment-groups/${id}`, {
       name: merged.name,
       description: merged.description ?? null,

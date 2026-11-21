@@ -3,10 +3,11 @@ import react from '@vitejs/plugin-react'
 
 // The SPA is served by the ASP.NET Core host in production, so the dev server
 // proxies /api to the local API (running on http://localhost:5080).
-export default defineConfig(({ command }) => ({
-  // Relative asset paths in builds so the static UI can also be opened directly
-  // from a folder (file:// or any sub-path); the dev server keeps '/'.
-  base: command === 'build' ? './' : '/',
+export default defineConfig(({ mode }) => ({
+  // Demo builds are opened from disk (file://) and need relative paths.
+  // The real app is served by the API from '/' - deep links like /inspection/<id>
+  // must resolve assets from the root, otherwise a refresh breaks the page.
+  base: mode === 'demo' ? './' : '/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',

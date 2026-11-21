@@ -9,8 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "dev:demo": "vite --mode demo",
-    "build:demo": "vite build --mode demo",
-    "preview:demo": "vite preview --mode demo"
+    "build:demo": "vite build --mode demo --config vite.demo.config.ts && node tools/package-demo.mjs",
+    "preview:demo": "vite preview --mode demo --config vite.demo.config.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
