@@ -1,0 +1,52 @@
+name: Build install package
+
+# Produces the ready-to-deploy folder as a downloadable artifact, so the package
+# can be obtained without installing the .NET SDK or Node.js locally.
+# Run it manually: Actions -> "Build install package" -> Run workflow.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publish (SPA + API)
+        shell: pwsh
+        run: |
+          ./nipco-maintenance-sql/deploy/publish.ps1 -OutputPath "${{ github.workspace }}\out\NIPCO-Maintenance"
+          Get-ChildItem "${{ github.workspace }}\out\NIPCO-Maintenance" | Select-Object Name
+
+      - name: Sanity checks
+        shell: pwsh
+        run: |
+          $out = "${{ github.workspace }}\out\NIPCO-Maintenance"
+          if (-not (Test-Path "$out\Nipco.Maintenance.Api.dll")) { throw "API dll missing" }
+          if (-not (Test-Path "$out\wwwroot\index.html")) { throw "SPA build missing" }
+          if (-not (Test-Path "$out\db\01_Install_NIPCO_Maintenance.sql")) { throw "DB script missing" }
+          if (-not (Test-Path "$out\docs\install.md")) { throw "Install guide missing" }
+          # no demo fixtures may leak into a production build
+          $hit = Select-String -Path "$out\wwwroot\assets\*.js" -Pattern 'پرس هیدرولیک 1000' -SimpleMatch
+          if ($hit) { throw "demo data found in the production bundle" }
+          Write-Host "All checks passed."
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NIPCO-Maintenance-install
+          path: out/NIPCO-Maintenance
+          retention-days: 30
